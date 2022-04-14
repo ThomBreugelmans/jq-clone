@@ -36,16 +36,16 @@ jsonNullSC :: JSON
 jsonNullSC = JNull
 
 jsonNumberSC :: Int -> JSON
-jsonNumberSC x = JNum x
+jsonNumberSC = JNum
 
 jsonStringSC :: String -> JSON
-jsonStringSC s = JString s
+jsonStringSC = JString
 
 jsonBoolSC :: Bool -> JSON
-jsonBoolSC b = JBool b
+jsonBoolSC = JBool
 
 jsonArraySC :: [JSON] -> JSON
-jsonArraySC js = JArray js
+jsonArraySC = JArray
 
 jsonObjectSC :: [(String, JSON)] -> JSON
-jsonObjectSC key_values = JObject key_values
+jsonObjectSC = JObject
