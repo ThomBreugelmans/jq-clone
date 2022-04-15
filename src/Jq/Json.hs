@@ -1,5 +1,8 @@
 module Jq.Json where
 
+import Data.List (intercalate)
+
+
 data JSON =
     JNull           |
     JNum    Int     |
@@ -7,6 +10,11 @@ data JSON =
     JBool   Bool    |
     JArray  [JSON]  |
     JObject [(String, JSON)]
+    
+prettyIndent :: String -> String 
+prettyIndent [] = []
+prettyIndent ('\n':inp) = "\n  " ++ prettyIndent inp
+prettyIndent (x:inp) = x : prettyIndent inp
 
 instance Show JSON where
   show (JNull) = "null"
@@ -15,9 +23,9 @@ instance Show JSON where
   show (JBool True) = "true"
   show (JBool False) = "false"
   show (JArray []) = "[]"
-  show (JArray xs) = "[\n" ++ unlines (map (\x -> "  " ++ (show x)) xs) ++ "]"
+  show (JArray xs) = "[\n  " ++ intercalate ",\n  " (map (prettyIndent . show) xs) ++ "\n]"
   show (JObject []) = "{}"
-  show (JObject kvs) = "{\n" ++ unlines (map (\(key, val) -> "  " ++ (show key) ++ ": " ++ (show val)) kvs) ++ "}"
+  show (JObject kvs) = "{\n  " ++ intercalate ",\n  " (map (\(k, v) -> prettyIndent (show k) ++ ": " ++ prettyIndent (show v)) kvs) ++ "\n}"
   show _ = undefined
 
 instance Eq JSON where
