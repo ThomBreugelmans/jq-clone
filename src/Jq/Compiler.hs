@@ -22,7 +22,9 @@ compile (ArrayIndex 0) (JArray (x:xs)) = Right [x]
 compile (ArrayIndex 0) (JArray []) = Left "Index out of bounds"
 compile (ArrayIndex i) (JArray (_:xs)) = compile (ArrayIndex (i-1)) (JArray xs)
 
-compile (ArraySlice _ _) (JArray []) = Left "Slice out of bounds"
+compile (ArraySlice 0 x) (JArray [])
+  | x <= 0 = Right [JArray []]
+  | otherwise = Left "Slice out of bounds"
 compile (ArraySlice 0 1) (JArray (x:xs)) = Right [JArray [x]]
 compile (ArraySlice 0 e) (JArray (x:xs)) = case compile (ArraySlice 0 (e-1)) (JArray xs) of
   Right [JArray ys] -> Right [JArray (x : ys)]
@@ -50,7 +52,7 @@ compile (Optional f) inp = case compile f inp of
   Left _ -> Right []
   res -> res
 
-compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (av ++ bv)) (compile b inp)) (compile a inp)
+compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (bv ++ av)) (compile b inp)) (compile a inp)
 
 compile (Pipe a b) inp = case compile a inp of
   Left err -> Left err
