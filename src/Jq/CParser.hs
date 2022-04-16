@@ -60,7 +60,7 @@ parseUnaryFilters = parseGroup <|> parseOptional <|> parseValueIterator <|> pars
 
 parseFilter :: Parser Filter
 parseFilter = do
-    f1 <- parsePipe <|> parseComma <|> parseUnaryFilters
+    f1 <- parseComma <|> parsePipe <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
 
