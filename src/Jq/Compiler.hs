@@ -54,7 +54,7 @@ compile (Optional f) inp = case compile f inp of
   Left _ -> Right []
   res -> res
 
-compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (bv ++ av)) (compile b inp)) (compile a inp)
+compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (av ++ bv)) (compile b inp)) (compile a inp)
 
 compile (Pipe a b) inp = case compile a inp of
   Left err -> Left err
