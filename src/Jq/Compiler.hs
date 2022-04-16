@@ -32,13 +32,13 @@ compile (ArraySlice s e) (JArray (x:xs)) = compile (ArraySlice (s-1) (e-1)) (JAr
 compile (ValueIterator []) (JArray _) = Right [JArray []]
 compile (ValueIterator _) (JArray []) = Left "ValueIterator index out of bounds"
 compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
-  Right [JArray ys] -> Right [JArray (x:ys)] 
+  Right [JArray ys] -> Right [JArray (x:ys)]
   err -> err
 compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
 compile (ValueIterator []) (JObject _) = Right [JArray []]
 compile (ValueIterator _) (JObject []) = Left "ValueIterator index out of bounds"
 compile (ValueIterator (0:vs)) (JObject ((_,x):xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JObject xs) of
-  Right [JArray ys] -> Right [JArray (x:ys)] 
+  Right [JArray ys] -> Right [JArray (x:ys)]
   err -> err
 compile (ValueIterator vs) (JObject (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JObject xs)
 
@@ -54,16 +54,16 @@ compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (av ++ b
 
 compile (Pipe a b) inp = case compile a inp of
   Left err -> Left err
-  Right out -> foldr 
-                  (\ x res -> 
-                    either 
+  Right out -> foldr
+                  (\ x res ->
+                    either
                       Left
-                      (\outp -> 
+                      (\outp ->
                         if isRight res then
-                          Right (fromRight [] res ++ outp) 
-                        else res) 
-                      (compile b x)) 
-                  (Right []) 
+                          Right (fromRight [] res ++ outp)
+                        else res)
+                      (compile b x))
+                  (Right [])
                   out
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")

@@ -26,7 +26,6 @@ instance Show JSON where
   show (JArray xs) = "[\n  " ++ intercalate ",\n  " (map (prettyIndent . show) xs) ++ "\n]"
   show (JObject []) = "{}"
   show (JObject kvs) = "{\n  " ++ intercalate ",\n  " (map (\(k, v) -> prettyIndent (show k) ++ ": " ++ prettyIndent (show v)) kvs) ++ "\n}"
-  show _ = undefined
 
 instance Eq JSON where
   (JNull) == (JNull) = True
