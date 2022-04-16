@@ -14,7 +14,7 @@ parseJBool = do _ <- string "true"
                     return (JBool False)
 
 parseJNum :: Parser JSON
-parseJNum = do JNum <$> int
+parseJNum = do JNum <$> integer
 
 -- TODO: support for escape chars
 parseJString :: Parser JSON
