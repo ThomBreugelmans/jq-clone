@@ -31,14 +31,16 @@ compile (ArraySlice 0 e) (JArray (x:xs)) = case compile (ArraySlice 0 (e-1)) (JA
   err -> err
 compile (ArraySlice s e) (JArray (x:xs)) = compile (ArraySlice (s-1) (e-1)) (JArray xs)
 
-compile (ValueIterator []) (JArray _) = Right [JArray []]
+compile (ValueIterator []) (JArray xs) = Right [JArray xs]
 compile (ValueIterator _) (JArray []) = Left "ValueIterator index out of bounds"
+compile (ValueIterator (0:[])) (JArray (x:xs)) = Right [JArray [x]]
 compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
   Right [JArray ys] -> Right [JArray (x:ys)]
   err -> err
 compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
-compile (ValueIterator []) (JObject _) = Right [JArray []]
+compile (ValueIterator []) (JObject kvs) = Right [JArray (map (\(_,v)->v) kvs)]
 compile (ValueIterator _) (JObject []) = Left "ValueIterator index out of bounds"
+compile (ValueIterator (0:[])) (JObject ((_,v):kvs)) = Right [JArray [v]]
 compile (ValueIterator (0:vs)) (JObject ((_,x):xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JObject xs) of
   Right [JArray ys] -> Right [JArray (x:ys)]
   err -> err
