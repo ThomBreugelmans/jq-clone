@@ -16,28 +16,25 @@ parseJBool = do _ <- string "true"
                     return (JBool False)
 
 parseJNum :: Parser JSON
-parseJNum = do (JNum <$> integer)
+parseJNum = do JNum <$> integer
 parseJFloat :: Parser JSON 
-parseJFloat = do (JFloat <$> float)
+parseJFloat = do JFloat <$> float
 
--- TODO: support for escape chars
-escapeUnicode :: Parser Char
-escapeUnicode = chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))
-escape :: Parser Char
-escape =  ('"' <$ string "\\\"") <|>
-          ('\\' <$ string "\\\\") <|>
-          ('/' <$ string "\\/") <|>
-          ('\b' <$ string "\\b") <|>
-          ('\f' <$ string "\\f") <|>
-          ('\n' <$ string "\\n") <|>
-          ('\r' <$ string "\\r") <|>
-          ('\t' <$ string "\\t") <|>
-          (string "\\u" *> escapeUnicode)
-normal :: Parser Char
-normal = sat ((&&) <$> (/= '"') <*> (/= '\\'))
+escape :: Parser String
+escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
+          (string "\\\\") <|>
+          (string "\\n") <|>
+          (string "\\t") <|>
+          (string "\\r") <|>
+          (string "\\f") <|>
+          (string "\\b") <|>
+          (string "\\/") <|>
+          (string "\\\"")
+normal :: Parser String
+normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
 parseJString :: Parser JSON
 parseJString = do str <- char '"' *> many (normal <|> escape) <* char '"'
-                  return (JString str)
+                  return (JString (concat str))
 
 seperateBy :: Parser a  -> Parser b -> Parser [b]
 seperateBy sep element = (:) <$> element <*> many (sep *> element)
@@ -61,4 +58,4 @@ parseJObjKeyVal = do k <- char '"' *> many (sat (/= '"')) <* char '"'
                      return (k, v)
 
 parseJSON :: Parser JSON
-parseJSON = token $ parseJNull <|> parseJBool <|> parseJString <|> parseJFloat <|> parseJArray <|> parseJObject
+parseJSON = token $ parseJNull <|> parseJBool <|> parseJString <|> parseJArray <|> parseJObject <|> parseJFloat
