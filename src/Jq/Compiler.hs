@@ -69,6 +69,9 @@ compile (Pipe a b) inp = case compile a inp of
                       (compile b x))
                   (Right [])
                   out
+                  
+compile Values (JArray xs) = Right xs
+compile Values (JObject kvs) = Right (map (\(_,v)->v) kvs)
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 

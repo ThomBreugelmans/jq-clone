@@ -9,7 +9,8 @@ data Filter =
   ArraySlice    Int Int  | 
   ValueIterator [Int]    | 
   Comma Filter  Filter   | 
-  Pipe Filter   Filter
+  Pipe Filter   Filter   |
+  Values
 
 instance Show Filter where
   show Identity = "."
@@ -22,6 +23,7 @@ instance Show Filter where
   show (Comma f1 f2) = show f1 ++ ", " ++ show f2
   show (Pipe f1 f2) = show f1 ++ ", " ++ show f2
   show (Optional f) = show f ++ "?"
+  show (Values) = "values"
 
 instance Eq Filter where
   Identity == Identity = True
@@ -33,6 +35,7 @@ instance Eq Filter where
   (Comma a1 a2) == (Comma b1 b2) = a1 == b1 && a2 == b2
   (Pipe a1 a2) == (Pipe b1 b2) = a1 == b1 && a2 == b2
   (Optional a) == (Optional b) = a == b
+  (Values) == (Values) = True
   _ == _ = False
   
 

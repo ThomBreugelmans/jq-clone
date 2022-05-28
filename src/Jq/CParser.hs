@@ -10,8 +10,8 @@ parseIdentity = do
 
 parseGroup :: Parser Filter
 parseGroup = do
-  filters <- symbol "(" *> parseFilter <* symbol ")"
-  return (Group [filters])
+  filts <- symbol "(" *> parseFilter <* symbol ")"
+  return (Group [filts])
 
 parseObjectIndex :: Parser Filter
 parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> many (sat (/= '"')) <* char '"' <* space <* char ']')
@@ -40,8 +40,13 @@ parseValueIterator = do xs <- string ".[" *> space *> elements <* space <* char 
 
 parseOptional :: Parser Filter
 parseOptional = do
-  filter <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseValueIterator) <* symbol "?"
-  return (Optional filter)
+  filt <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseValueIterator) <* symbol "?"
+  return (Optional filt)
+  
+parseAllIterator :: Parser Filter 
+parseAllIterator = do 
+  _ <- symbol "." *> symbol "[" *> symbol "]"
+  return Values
 
 parseComma :: Parser Filter
 parseComma = do
@@ -56,7 +61,7 @@ parsePipe = do
   return (Pipe f1 f2)
 
 parseUnaryFilters :: Parser Filter 
-parseUnaryFilters = parseGroup <|> parseOptional <|> parseValueIterator <|> parseArraySlice <|> parseArrayIndex <|> parseObjectIndex <|> parseIdentity
+parseUnaryFilters = parseGroup <|> parseOptional <|> parseAllIterator <|> parseArraySlice <|> parseArrayIndex <|> parseObjectIndex <|> parseValueIterator <|> parseIdentity
 
 parseFilter :: Parser Filter
 parseFilter = do

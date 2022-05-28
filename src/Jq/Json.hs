@@ -6,6 +6,7 @@ import Data.List (intercalate)
 data JSON =
     JNull           |
     JNum    Int     |
+    JFloat  Float   |
     JString String  |
     JBool   Bool    |
     JArray  [JSON]  |
@@ -19,6 +20,7 @@ prettyIndent (x:inp) = x : prettyIndent inp
 instance Show JSON where
   show (JNull) = "null"
   show (JNum a) = show a
+  show (JFloat a) = show a
   show (JString s) = '\"' : s ++ "\""
   show (JBool True) = "true"
   show (JBool False) = "false"
@@ -30,6 +32,7 @@ instance Show JSON where
 instance Eq JSON where
   (JNull) == (JNull) = True
   (JNum a) == (JNum b) = a == b
+  (JFloat a) == (JFloat b) = a == b
   (JString a) == (JString b) = a == b
   (JBool a) == (JBool b) = a == b
   (JArray xs) == (JArray ys) = xs == ys

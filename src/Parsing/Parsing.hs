@@ -119,5 +119,16 @@ natural = token nat
 integer :: Parser Int
 integer = token int
 
+float :: Parser Float
+float = do
+    space
+    sign <- char '-' <|> pure ' '
+    decimal <- many digit
+    _ <- char '.'
+    point <- many digit <|> pure "0"
+    space
+    return (read (sign : decimal ++ "." ++ point) :: Float)
+    
+
 symbol :: String -> Parser String
 symbol xs = token (string xs)
