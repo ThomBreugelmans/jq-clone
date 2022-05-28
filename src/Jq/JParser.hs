@@ -28,7 +28,7 @@ escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA
           (string "\\r") <|>
           (string "\\f") <|>
           (string "\\b") <|>
---          (string "\\/") <|>
+          (string "\\/" *> pure "/") <|>
           (string "\\\"")
 normal :: Parser String
 normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
