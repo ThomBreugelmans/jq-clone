@@ -51,12 +51,12 @@ parseAllIterator = do
 parseComma :: Parser Filter
 parseComma = do
   f1 <- parseUnaryFilters
-  f2 <- symbol "," *> parseFilter
+  f2 <- symbol "," *> parseUnaryFilters
   return (Comma f1 f2)
   
 parsePipe :: Parser Filter
 parsePipe = do 
-  f1 <- parseUnaryFilters
+  f1 <- parseComma <|> parseUnaryFilters
   f2 <- symbol "|" *> parseFilter
   return (Pipe f1 f2)
 
@@ -65,7 +65,7 @@ parseUnaryFilters = parseGroup <|> parseOptional <|> parseAllIterator <|> parseA
 
 parseFilter :: Parser Filter
 parseFilter = do
-    f1 <- parseComma <|> parsePipe <|> parseUnaryFilters
+    f1 <- parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
 

@@ -58,17 +58,21 @@ compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (av ++ b
 
 compile (Pipe a b) inp = case compile a inp of
   Left err -> Left err
-  Right out -> foldr
-                  (\ x res ->
-                    either
-                      Left
-                      (\outp ->
-                        if isRight res then
-                          Right (fromRight [] res ++ outp)
-                        else res)
-                      (compile b x))
-                  (Right [])
-                  out
+--  Right out -> foldr
+--                  (\ x res ->
+--                    either
+--                      Left
+--                      (\outp ->
+--                        if isRight res then
+--                          Right (fromRight [] res ++ outp)
+--                        else res)
+--                      (compile b x))
+--                  (Right [])
+--                  out
+  Right av -> f av 
+  where
+    f [] = Right []
+    f (x:xs) = either Left (\out -> (out ++) <$> f xs) (compile b x)
                   
 compile Values (JArray xs) = Right xs
 compile Values (JObject kvs) = Right (map (\(_,v)->v) kvs)
