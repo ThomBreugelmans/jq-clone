@@ -124,10 +124,10 @@ float = do
     space
     sign <- char '-' <|> pure ' '
     decimal <- many digit
-    _ <- char '.'
-    point <- many digit <|> pure "0"
+    point <- char '.' *> many digit <|> pure "0"
+    exp <- (char 'e' <|> char 'E') *> ((*) <$> ((1 <$ char '+') <|> ((-1) <$ char '-') <|> pure 1) <*> (read <$> many digit)) <|> pure 0
     space
-    return (read (sign : decimal ++ "." ++ point) :: Float)
+    return ((read (sign : decimal ++ "." ++ point) :: Float) * (10 ^^ exp))
     
 
 symbol :: String -> Parser String
