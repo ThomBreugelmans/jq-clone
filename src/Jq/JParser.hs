@@ -61,4 +61,4 @@ parseJObjKeyVal = do k <- char '"' *> many (sat (/= '"')) <* char '"'
                      return (k, v)
 
 parseJSON :: Parser JSON
-parseJSON = token $ parseJNull <|> parseJBool <|> parseJFloat <|> parseJString <|> parseJArray <|> parseJObject
+parseJSON = token $ parseJNull <|> parseJBool <|> parseJString <|> parseJFloat <|> parseJArray <|> parseJObject
