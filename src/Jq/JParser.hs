@@ -42,8 +42,12 @@ seperateBy sep element = (:) <$> element <*> many (sep *> element)
   <|> pure []
 
 parseJArray :: Parser JSON
-parseJArray = do xs <- char '[' *> space *> elements <* space <* char ']'
-                 return (JArray xs)
+parseJArray = 
+  do _ <- char '[' *> space <* char ']'
+     return (JArray [])
+  <|>
+  do xs <- char '[' *> space *> elements <* space <* char ']'
+     return (JArray xs)
   where
     elements = seperateBy (space *> char ',' <* space) parseJSON
 
@@ -59,4 +63,4 @@ parseJObjKeyVal = do k <- char '"' *> many (normal <|> escape) <* char '"'
                      return (concat k, v)
 
 parseJSON :: Parser JSON
-parseJSON = token $ parseJNull <|> parseJBool <|> parseJString <|> parseJArray <|> parseJObject <|> parseJFloat
+parseJSON = token $ parseJNull <|> parseJArray <|> parseJObject <|> parseJBool <|> parseJString <|> parseJFloat

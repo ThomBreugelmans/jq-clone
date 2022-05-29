@@ -11,9 +11,11 @@ data Filter =
   ObjectValueIterator [String]    |  
   Comma Filter  Filter   | 
   Pipe Filter   Filter   |
+  RecDescent             |
 --  ConstructValue  Filter   |
   FNull                  |
-  FNum          Int  |
+  FNum          Int      |
+  FFloat        Float    |
   FBool         Bool     |
   FString       String   |
   FArray        [Filter] |
@@ -32,6 +34,7 @@ instance Show Filter where
   show (Comma f1 f2) = show f1 ++ ", " ++ show f2
   show (Pipe f1 f2) = show f1 ++ ", " ++ show f2
   show (Optional f) = show f ++ "?"
+  show (RecDescent) = ".."
 
 instance Eq Filter where
   Identity == Identity = True
@@ -44,10 +47,12 @@ instance Eq Filter where
   (Comma a1 a2) == (Comma b1 b2) = a1 == b1 && a2 == b2
   (Pipe a1 a2) == (Pipe b1 b2) = a1 == b1 && a2 == b2
   (Optional a) == (Optional b) = a == b
+  (RecDescent) == (RecDescent) = True
   
 --  (ConstructValue a) == (ConstructValue b) = a == b
   (FNull) == (FNull) = True
   (FNum a) == (FNum b) = a == b
+  (FFloat a) == (FFloat b) = a == b
   (FBool a) == (FBool b) = a == b
   (FString a) == (FString b) = a == b
   (FArray xs) == (FArray ys) = xs == ys

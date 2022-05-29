@@ -3,7 +3,7 @@ module Jq.Compiler where
 import           Jq.Filters
 import           Jq.Json
 import Data.Either (isRight, fromRight, fromLeft)
-import Data.Map (lookup, elems, notMember, fromList)
+import Data.Map (lookup, elems, notMember, fromList, empty)
 import Data.Maybe (fromJust)
 
 
@@ -74,12 +74,27 @@ compile (Pipe a b) inp = case compile a inp of
   where
     f [] = Right []
     f (x:xs) = either Left (\out -> (out ++) <$> f xs) (compile b x)
+
+
+compile RecDescent (JObject mp) = Right $ JObject mp : elems mp
+  where
+    c :: [JSON] -> [JSON]
+    c [] = []
+    c (y:ys) = fromRight [] (compile RecDescent y) ++ c ys
+compile RecDescent (JArray []) = Right [JArray []]
+compile RecDescent (JArray xs) = Right $ JArray xs : c xs
+  where
+    c :: [JSON] -> [JSON]
+    c [] = []
+    c (y:ys) = fromRight [] (compile RecDescent y) ++ c ys
+compile RecDescent inp = Right [inp]
                   
 --compile (ConstructValue (FBool b)) inp = Right [JBool b]
 --compile (ConstructValue (FNum f)) inp = Right [JFloat f]
 compile (FNull) inp = Right [JNull]
 compile (FBool b) inp = Right [JBool b]
 compile (FNum f) inp = Right [JNum f]
+compile (FFloat f) inp = Right [JFloat f]
 compile (FString s) inp = Right [JString s]
 compile (FArray []) inp = Right [JArray []]
 compile (FArray (x:xs)) inp = case compile (FArray xs) inp of

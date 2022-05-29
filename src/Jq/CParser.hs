@@ -54,7 +54,7 @@ parseObjectValueIterator = do
     elements = seperateBy (space *> char ',' <* space) (char '"' *> many (normal <|> escape) <* char '"')
     seperateBy sep element = (:) <$> element <*> many (sep *> element)
       <|> pure []
-    
+
 
 parseOptional :: Parser Filter
 parseOptional = do
@@ -77,18 +77,22 @@ parsePipe = do
   f1 <- parseComma <|> parseUnaryFilters
   f2 <- symbol "|" *> parseFilter
   return (Pipe f1 f2)
+  
+parseRecDescent :: Parser Filter
+parseRecDescent = string ".." *> pure RecDescent
 
 parseUnaryFilters :: Parser Filter 
 parseUnaryFilters = parseGroup <|>
                     parseOptional <|>
                     parseIndexers <|>
+                    parseRecDescent <|>
                     parseIdentity
 
 parseIndexers :: Parser Filter
 parseIndexers = parseArrayIndex <|>
                 parseObjectIndex <|>
                 parseArraySlice <|>
-                parseArrayValueIterator <|> 
+                parseArrayValueIterator <|>
                 parseObjectValueIterator
 
 parseFilter :: Parser Filter
@@ -96,18 +100,19 @@ parseFilter = do
     f1 <- parseValueConstructors <|> parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
-    
-    
+
+
 parseValueConstructors :: Parser Filter
 parseValueConstructors = string "null" *> return (FNull) <|>
                          string "true" *> return (FBool True) <|>
                          string "false" *> return (FBool False) <|>
                          FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
-                         FNum <$> integer <|> -- TODO for some reason floats result in infinite loops... wtf
+                         FNum <$> integer <|> 
+--                         FFloat <$> float <|> -- TODO for some reason floats result in infinite loops... wtf
                          do
                             el <- char '[' *> space *> elements <* space <* char ']'
                             return (FArray el)
-                        <|> 
+                        <|>
                         do
                             kvs <- char '{' *> space *> seperateBy (space *> char ',' <* space) keyValuePairs <* space <* char '}'
                             return (FObject kvs)
@@ -121,6 +126,7 @@ parseValueConstructors = string "null" *> return (FNull) <|>
        _ <- space *> char ':' <* space
        v <- parseFilter
        return (k,v)
+       
 
 
 parseConfig :: [String] -> Either String Config
