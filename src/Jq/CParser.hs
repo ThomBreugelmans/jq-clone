@@ -75,7 +75,13 @@ parsePipe = do
   return (Pipe f1 f2)
 
 parseUnaryFilters :: Parser Filter 
-parseUnaryFilters = parseGroup <|> parseOptional <|> parseAllIterator <|> parseArraySlice <|> parseArrayIndex <|> parseObjectIndex <|> parseValueIterator <|> parseIdentity
+parseUnaryFilters = parseGroup <|> 
+                    parseOptional <|> 
+                    parseArrayIndex <|> 
+                    parseObjectIndex <|> 
+                    parseValueIterator <|> 
+                    parseArraySlice <|> 
+                    parseIdentity
 
 parseFilter :: Parser Filter
 parseFilter = do

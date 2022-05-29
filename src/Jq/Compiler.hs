@@ -39,21 +39,40 @@ compile (ArraySlice s e) (JArray xs)
     Right [JArray ys] -> Right [JArray (head xs : ys)]
     err -> err
   | otherwise = compile (ArraySlice (s-1) (e-1)) (JArray $ tail xs)
+  
 
-compile (ValueIterator []) (JArray xs) = Right [JArray xs]
-compile (ValueIterator _) (JArray []) = Left "ValueIterator index out of bounds"
-compile (ValueIterator [0]) (JArray (x:xs)) = Right [JArray [x]]
-compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
-  Right [JArray ys] -> Right [JArray (x:ys)]
-  err -> err
-compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
-compile (ValueIterator []) (JObject kvs) = Right [JArray (map (\(_,v)->v) kvs)]
-compile (ValueIterator _) (JObject []) = Left "ValueIterator index out of bounds"
-compile (ValueIterator (0:[])) (JObject ((_,v):kvs)) = Right [JArray [v]]
-compile (ValueIterator (0:vs)) (JObject ((_,x):xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JObject xs) of
-  Right [JArray ys] -> Right [JArray (x:ys)]
-  err -> err
-compile (ValueIterator vs) (JObject (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JObject xs)
+compile (ValueIterator []) (JArray xs) = Right xs
+compile (ValueIterator (v:vs)) (JArray xs)
+  | v < 0           = compile (ValueIterator ((length xs + v):vs)) (JArray xs)
+  | vs /= []        = (f :) <$> compile (ValueIterator vs) (JArray xs)
+  | otherwise       = Right [f]
+  where
+    f
+      | v >= length xs  = JNull
+      | otherwise       = xs !! v
+--compile (ValueIterator []) (JArray xs) = Right [JArray xs]
+--compile (ValueIterator _) (JArray []) = Right [JNull]
+--compile (ValueIterator [0]) (JArray (x:xs)) = Right [JArray [x]]
+--compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
+--  Right [JArray ys] -> Right [JArray (x:ys)]
+--  err -> err
+--compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
+compile (ValueIterator []) (JObject kvs) = Right $ map (\(_,v)->v) kvs
+compile (ValueIterator (v:vs)) (JObject kvs)
+  | v < 0           = compile (ValueIterator ((length kvs + v):vs)) (JObject kvs)
+  | vs /= []        = (f :) <$> compile (ValueIterator vs) (JObject kvs)
+  | otherwise       = Right [f]
+  where
+    f
+      | v >= length kvs  = JNull
+      | otherwise       = snd (kvs !! v) 
+--compile (ValueIterator []) (JObject kvs) = Right [JArray (map (\(_,v)->v) kvs)]
+--compile (ValueIterator _) (JObject []) = Right [JNull]
+--compile (ValueIterator (0:[])) (JObject ((_,v):kvs)) = Right [JArray [v]]
+--compile (ValueIterator (0:vs)) (JObject ((_,x):xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JObject xs) of
+--  Right [JArray ys] -> Right [JArray (x:ys)]
+--  err -> err
+--compile (ValueIterator vs) (JObject (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JObject xs)
 
 compile (Optional Identity) _ = Left "No Optional possible for filter of type \"Identity\""
 compile (Optional (Group _)) _ = Left "No Optional possible for filter of type \"Group\""
