@@ -2,7 +2,7 @@ module Jq.Filters where
 
 data Filter = 
   Identity               | 
-  Group         [Filter] | 
+  Group         [Filter] |
   ObjectIndex   String   | 
   Optional      Filter   | 
   ArrayIndex    Int      | 

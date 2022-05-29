@@ -20,22 +20,29 @@ compile (ObjectIndex _) inp = Left ("Input is not of type JObject: " ++ show inp
 
 compile (ArrayIndex 0) (JArray (x:xs)) = Right [x]
 compile (ArrayIndex 0) (JArray []) = Left "Index out of bounds"
-compile (ArrayIndex i) (JArray (x:xs)) 
+compile (ArrayIndex i) (JArray (x:xs))
   | i > 0 = compile (ArrayIndex (i-1)) (JArray xs)
   | i < 0 = compile (ArrayIndex ((-i)-1)) (JArray $ reverse (x:xs))
 
-compile (ArraySlice 0 x) (JArray [])
-  | x <= 0 = Right [JArray []]
-  | otherwise = Left "Slice out of bounds"
-compile (ArraySlice 0 1) (JArray (x:xs)) = Right [JArray [x]]
-compile (ArraySlice 0 e) (JArray (x:xs)) = case compile (ArraySlice 0 (e-1)) (JArray xs) of
-  Right [JArray ys] -> Right [JArray (x : ys)]
-  err -> err
-compile (ArraySlice s e) (JArray (x:xs)) = compile (ArraySlice (s-1) (e-1)) (JArray xs)
+--compile (ArraySlice 0 x) (JArray []) = Right [JArray []]
+--compile (ArraySlice 0 1) (JArray (x:xs)) = Right [JArray [x]]
+--compile (ArraySlice 0 e) (JArray (x:xs)) = case compile (ArraySlice 0 (e-1)) (JArray xs) of
+--  Right [JArray ys] -> Right [JArray (x : ys)]
+--  err -> err
+compile (ArraySlice s e) (JArray xs)
+  | s < 0 = compile (ArraySlice (length xs + s) e) (JArray xs)
+  | e < 0 = compile (ArraySlice s (length xs + e)) (JArray xs)
+  | xs == [] = Right [JArray []]
+  | s >= e = Right [JArray []]
+  | s == e = Right [JArray []]
+  | s == 0 = case compile (ArraySlice s (e-1)) (JArray (tail xs)) of
+    Right [JArray ys] -> Right [JArray (head xs : ys)]
+    err -> err
+  | otherwise = compile (ArraySlice (s-1) (e-1)) (JArray $ tail xs)
 
 compile (ValueIterator []) (JArray xs) = Right [JArray xs]
 compile (ValueIterator _) (JArray []) = Left "ValueIterator index out of bounds"
-compile (ValueIterator (0:[])) (JArray (x:xs)) = Right [JArray [x]]
+compile (ValueIterator [0]) (JArray (x:xs)) = Right [JArray [x]]
 compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
   Right [JArray ys] -> Right [JArray (x:ys)]
   err -> err
@@ -71,7 +78,7 @@ compile (Pipe a b) inp = case compile a inp of
 --                      (compile b x))
 --                  (Right [])
 --                  out
-  Right av -> f av 
+  Right av -> f av
   where
     f [] = Right []
     f (x:xs) = either Left (\out -> (out ++) <$> f xs) (compile b x)

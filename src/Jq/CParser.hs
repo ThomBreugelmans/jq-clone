@@ -38,9 +38,10 @@ parseArrayIndex = ArrayIndex <$> (string ".[" *> int <* char ']')
 
 parseArraySlice :: Parser Filter
 parseArraySlice = do
-  start <- string ".[" *> natural <* char ':'
-  end <- natural <|> pure (-1)
-  _ <- symbol "]"
+  start <- string ".[" *> space *> integer <|> pure 0
+  _ <- space *> char ':'
+  end <- space *> integer <|> pure (maxBound :: Int)
+  _ <- space *> symbol "]"
   return (ArraySlice start end)
 
 parseValueIterator :: Parser Filter
