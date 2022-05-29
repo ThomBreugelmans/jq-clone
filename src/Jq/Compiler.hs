@@ -26,11 +26,6 @@ compile (ArrayIndex i) (JArray (x:xs))
   | i > 0 = compile (ArrayIndex (i-1)) (JArray xs)
   | i < 0 = compile (ArrayIndex ((-i)-1)) (JArray $ reverse (x:xs))
 
---compile (ArraySlice 0 x) (JArray []) = Right [JArray []]
---compile (ArraySlice 0 1) (JArray (x:xs)) = Right [JArray [x]]
---compile (ArraySlice 0 e) (JArray (x:xs)) = case compile (ArraySlice 0 (e-1)) (JArray xs) of
---  Right [JArray ys] -> Right [JArray (x : ys)]
---  err -> err
 compile (ArraySlice s e) (JArray xs)
   | s < 0 = compile (ArraySlice (length xs - min (-s) (length xs)) e) (JArray xs)
   | e < 0 = compile (ArraySlice s (length xs - min (-e) (length xs))) (JArray xs)
@@ -53,13 +48,6 @@ compile (ArrayValueIterator (v:vs)) (JArray xs)
     f
       | v >= length xs  = JNull
       | otherwise       = xs !! v
---compile (ValueIterator []) (JArray xs) = Right [JArray xs]
---compile (ValueIterator _) (JArray []) = Right [JNull]
---compile (ValueIterator [0]) (JArray (x:xs)) = Right [JArray [x]]
---compile (ValueIterator (0:vs)) (JArray (x:xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JArray xs) of
---  Right [JArray ys] -> Right [JArray (x:ys)]
---  err -> err
---compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
 compile (ObjectValueIterator []) (JObject kvs) = Right $ elems kvs
 compile (ObjectValueIterator []) (JArray xs) = compile (ArrayValueIterator []) (JArray xs)
 compile (ObjectValueIterator (v:vs)) (JObject kvs)
@@ -69,13 +57,6 @@ compile (ObjectValueIterator (v:vs)) (JObject kvs)
     f
       | notMember v kvs   = JNull
       | otherwise         = fromJust $ Data.Map.lookup v kvs
---compile (ValueIterator []) (JObject kvs) = Right [JArray (map (\(_,v)->v) kvs)]
---compile (ValueIterator _) (JObject []) = Right [JNull]
---compile (ValueIterator (0:[])) (JObject ((_,v):kvs)) = Right [JArray [v]]
---compile (ValueIterator (0:vs)) (JObject ((_,x):xs)) = case compile (ValueIterator (map (\x->x-1) vs)) (JObject xs) of
---  Right [JArray ys] -> Right [JArray (x:ys)]
---  err -> err
---compile (ValueIterator vs) (JObject (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JObject xs)
 
 compile (Optional Identity) _ = Left "No Optional possible for filter of type \"Identity\""
 compile (Optional (Group _)) _ = Left "No Optional possible for filter of type \"Group\""
@@ -89,24 +70,16 @@ compile (Comma a b) inp = either Left (\av -> either Left (\bv -> Right (av ++ b
 
 compile (Pipe a b) inp = case compile a inp of
   Left err -> Left err
---  Right out -> foldr
---                  (\ x res ->
---                    either
---                      Left
---                      (\outp ->
---                        if isRight res then
---                          Right (fromRight [] res ++ outp)
---                        else res)
---                      (compile b x))
---                  (Right [])
---                  out
   Right av -> f av
   where
     f [] = Right []
     f (x:xs) = either Left (\out -> (out ++) <$> f xs) (compile b x)
                   
---compile Values (JArray xs) = Right xs
---compile Values (JObject kvs) = Right (map (\(_,v)->v) kvs)
+--compile (ConstructValue (FBool b)) inp = Right [JBool b]
+--compile (ConstructValue (FNum f)) inp = Right [JFloat f]
+compile (FBool b) inp = Right [JBool b]
+compile (FNum f) inp = Right [JNum f]
+compile (FString s) inp = Right [JString s]
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 

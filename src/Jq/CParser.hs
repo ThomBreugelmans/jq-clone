@@ -2,13 +2,16 @@ module Jq.CParser where
 
 import Parsing.Parsing
 import Jq.Filters
+import Jq.JParser (normal, escape)
 import Data.Char (chr, isHexDigit)
 import Numeric (readHex)
+
 
 parseIdentity :: Parser Filter
 parseIdentity = do
   _ <- space *> char '.' <* space
-  return Identity
+  filt <- parseIndexers <|> parseOptional <|> pure Identity
+  if filt == Identity then return Identity else return (Pipe Identity filt)
 
 parseGroup :: Parser Filter
 parseGroup = do
@@ -21,17 +24,6 @@ parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> (concat 
     ObjectIndex <$> (char '.' *> ident)
   <|>
     ObjectIndex <$> (string ".\"" *> (concat <$> many (normal <|> escape)) <* char '"')
-  where
-    escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
-              (string "\\\\") <|>
-              (string "\\n") <|>
-              (string "\\t") <|>
-              (string "\\r") <|>
-              (string "\\f") <|>
-              (string "\\b") <|>
-              (string "\\/" *> pure "/") <|>
-              (string "\\\"")
-    normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = ArrayIndex <$> (string ".[" *> int <* char ']')
@@ -61,16 +53,7 @@ parseObjectValueIterator = do
     elements = seperateBy (space *> char ',' <* space) (char '"' *> many (normal <|> escape) <* char '"')
     seperateBy sep element = (:) <$> element <*> many (sep *> element)
       <|> pure []
-    escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
-              (string "\\\\") <|>
-              (string "\\n") <|>
-              (string "\\t") <|>
-              (string "\\r") <|>
-              (string "\\f") <|>
-              (string "\\b") <|>
-              (string "\\/" *> pure "/") <|>
-              (string "\\\"")
-    normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
+    
 
 parseOptional :: Parser Filter
 parseOptional = do
@@ -98,6 +81,7 @@ parseUnaryFilters :: Parser Filter
 parseUnaryFilters = parseGroup <|>
                     parseOptional <|>
                     parseIndexers <|>
+                    parseValueConstructors <|>
                     parseIdentity
 
 parseIndexers :: Parser Filter
@@ -112,6 +96,13 @@ parseFilter = do
     f1 <- parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
+    
+    
+parseValueConstructors :: Parser Filter
+parseValueConstructors = string "true" *> return (FBool True) <|>
+                         string "false" *> return (FBool False) <|>
+                         FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
+                         FNum <$> integer -- TODO for some reason floats result in infinite loops... wtf
 
 
 parseConfig :: [String] -> Either String Config
