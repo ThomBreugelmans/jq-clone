@@ -106,6 +106,19 @@ compile (FObject kvs) inp = Right [JObject (fromList (map (\(k,v) -> (compileKey
       Right [JString s] -> s
     compileVal v = case compile v inp of
       Right [x] -> x
+      
+      
+-- BONUS
+compile (Equals f1 f2) inp = case compile f1 inp of
+  Right [JBool v] -> case compile f2 inp of
+    Right [JBool v2] -> Right [JBool (v == v2)]
+    _ -> Left "second value not a boolean"
+  _ -> Left "first value not a boolean"
+compile (NotEquals f1 f2) inp = case compile f1 inp of
+  Right [JBool v] -> case compile f2 inp of
+    Right [JBool v2] -> Right [JBool (v /= v2)]
+    _ -> Left "second value not a boolean"
+  _ -> Left "first value not a boolean"
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 

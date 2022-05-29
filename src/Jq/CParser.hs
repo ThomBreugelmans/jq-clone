@@ -77,7 +77,7 @@ parsePipe = do
   f1 <- parseComma <|> parseUnaryFilters
   f2 <- symbol "|" *> parseFilter
   return (Pipe f1 f2)
-  
+
 parseRecDescent :: Parser Filter
 parseRecDescent = string ".." *> pure RecDescent
 
@@ -101,13 +101,12 @@ parseFilter = do
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
 
-
 parseValueConstructors :: Parser Filter
 parseValueConstructors = string "null" *> return (FNull) <|>
                          string "true" *> return (FBool True) <|>
                          string "false" *> return (FBool False) <|>
                          FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
-                         FNum <$> integer <|> 
+                         FNum <$> integer <|>
 --                         FFloat <$> float <|> -- TODO for some reason floats result in infinite loops... wtf
                          do
                             el <- char '[' *> space *> elements <* space <* char ']'
@@ -126,7 +125,21 @@ parseValueConstructors = string "null" *> return (FNull) <|>
        _ <- space *> char ':' <* space
        v <- parseFilter
        return (k,v)
-       
+
+
+-- BONUS
+parseEquals :: Parser Filter
+parseEquals = do 
+  f1 <- parseFilter
+  _ <- space *> string " == " <* space
+  f2 <- parseFilter
+  return (Equals f1 f2)  
+parseNotEquals :: Parser Filter
+parseNotEquals = do 
+  f1 <- parseFilter
+  _ <- space *> string " == " <* space
+  f2 <- parseFilter
+  return (NotEquals f1 f2)  
 
 
 parseConfig :: [String] -> Either String Config

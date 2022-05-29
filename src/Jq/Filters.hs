@@ -8,10 +8,15 @@ data Filter =
   ArrayIndex    Int      | 
   ArraySlice    Int Int  | 
   ArrayValueIterator [Int]    |
-  ObjectValueIterator [String]    |  
+  ObjectValueIterator [String]    |
   Comma Filter  Filter   | 
   Pipe Filter   Filter   |
   RecDescent             |
+  
+-- BONUS
+  Equals        Filter Filter |
+  NotEquals        Filter Filter |
+  
 --  ConstructValue  Filter   |
   FNull                  |
   FNum          Int      |
@@ -35,6 +40,8 @@ instance Show Filter where
   show (Pipe f1 f2) = show f1 ++ ", " ++ show f2
   show (Optional f) = show f ++ "?"
   show (RecDescent) = ".."
+  show (Equals f1 f2) = show f1 ++ " == " ++ show f2
+  show (NotEquals f1 f2) = show f1 ++ " != " ++ show f2
 
 instance Eq Filter where
   Identity == Identity = True
@@ -48,7 +55,9 @@ instance Eq Filter where
   (Pipe a1 a2) == (Pipe b1 b2) = a1 == b1 && a2 == b2
   (Optional a) == (Optional b) = a == b
   (RecDescent) == (RecDescent) = True
-  
+  (Equals a1 a2) == (Equals b1 b2) = a1 == b1 && a2 == b2
+  (NotEquals a1 a2) == (NotEquals b1 b2) = a1 == b1 && a2 == b2
+
 --  (ConstructValue a) == (ConstructValue b) = a == b
   (FNull) == (FNull) = True
   (FNum a) == (FNum b) = a == b
