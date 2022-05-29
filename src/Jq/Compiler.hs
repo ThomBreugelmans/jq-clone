@@ -77,6 +77,7 @@ compile (Pipe a b) inp = case compile a inp of
                   
 --compile (ConstructValue (FBool b)) inp = Right [JBool b]
 --compile (ConstructValue (FNum f)) inp = Right [JFloat f]
+compile (FNull) inp = Right [JNull]
 compile (FBool b) inp = Right [JBool b]
 compile (FNum f) inp = Right [JNum f]
 compile (FString s) inp = Right [JString s]

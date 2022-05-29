@@ -12,6 +12,7 @@ data Filter =
   Comma Filter  Filter   | 
   Pipe Filter   Filter   |
 --  ConstructValue  Filter   |
+  FNull                  |
   FNum          Int  |
   FBool         Bool     |
   FString       String   |
@@ -44,6 +45,7 @@ instance Eq Filter where
   (Optional a) == (Optional b) = a == b
   
 --  (ConstructValue a) == (ConstructValue b) = a == b
+  (FNull) == (FNull) = True
   (FNum a) == (FNum b) = a == b
   (FBool a) == (FBool b) = a == b
   (FString a) == (FString b) = a == b

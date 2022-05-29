@@ -99,7 +99,8 @@ parseFilter = do
     
     
 parseValueConstructors :: Parser Filter
-parseValueConstructors = string "true" *> return (FBool True) <|>
+parseValueConstructors = string "null" *> return (FNull) <|>
+                         string "true" *> return (FBool True) <|>
                          string "false" *> return (FBool False) <|>
                          FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
                          FNum <$> integer <|> -- TODO for some reason floats result in infinite loops... wtf
