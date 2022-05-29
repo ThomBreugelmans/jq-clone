@@ -2,6 +2,8 @@ module Jq.CParser where
 
 import Parsing.Parsing
 import Jq.Filters
+import Data.Char (chr, isHexDigit)
+import Numeric (readHex)
 
 parseIdentity :: Parser Filter
 parseIdentity = do
@@ -14,11 +16,22 @@ parseGroup = do
   return (Group [filts])
 
 parseObjectIndex :: Parser Filter
-parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> many (sat (/= '"')) <* char '"' <* space <* char ']')
+parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> (concat <$> many (normal <|> escape)) <* char '"' <* space <* char ']')
   <|>
     ObjectIndex <$> (char '.' *> ident)
   <|>
     ObjectIndex <$> (string ".\"" *> ident <* char '"')
+  where
+    escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
+              (string "\\\\") <|>
+              (string "\\n") <|>
+              (string "\\t") <|>
+              (string "\\r") <|>
+              (string "\\f") <|>
+              (string "\\b") <|>
+              (string "\\/" *> pure "/") <|>
+              (string "\\\"")
+    normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = ArrayIndex <$> (string ".[" *> int <* char ']')

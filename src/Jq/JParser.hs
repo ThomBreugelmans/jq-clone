@@ -52,10 +52,10 @@ parseJObject = JObject <$> (char '{' *> space *> keyvalues <* space <* char '}')
     keyvalues = seperateBy (space *> char ',' <* space) parseJObjKeyVal
 
 parseJObjKeyVal :: Parser (String, JSON)
-parseJObjKeyVal = do k <- char '"' *> many (sat (/= '"')) <* char '"'
+parseJObjKeyVal = do k <- char '"' *> many (normal <|> escape) <* char '"'
                      _ <- space *> char ':' <* space
                      v <- parseJSON
-                     return (k, v)
+                     return (concat k, v)
 
 parseJSON :: Parser JSON
 parseJSON = token $ parseJNull <|> parseJBool <|> parseJString <|> parseJArray <|> parseJObject <|> parseJFloat
