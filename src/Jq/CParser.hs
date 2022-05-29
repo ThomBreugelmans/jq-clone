@@ -97,7 +97,7 @@ parseIndexers = parseArrayIndex <|>
 
 parseFilter :: Parser Filter
 parseFilter = do
-    f1 <- parseValueConstructors <|> parsePipe <|> parseComma <|> parseUnaryFilters
+    f1 <- parseValueConstructors <|> parseBonus <|> parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
 
@@ -128,6 +128,8 @@ parseValueConstructors = string "null" *> return (FNull) <|>
 
 
 -- BONUS
+parseBonus = parseEquals <|> parseNotEquals
+
 parseEquals :: Parser Filter
 parseEquals = do 
   f1 <- parseFilter
