@@ -44,23 +44,42 @@ parseArraySlice = do
   _ <- space *> symbol "]"
   return (ArraySlice start end)
 
-parseValueIterator :: Parser Filter
-parseValueIterator = do xs <- string ".[" *> space *> elements <* space <* char ']'
-                        return (ValueIterator xs)
+parseArrayValueIterator :: Parser Filter
+parseArrayValueIterator = do 
+  xs <- string ".[" *> space *> elements <* space <* char ']'
+  return (ArrayValueIterator xs)
   where
     elements = seperateBy (space *> char ',' <* space) natural
     seperateBy sep element = (:) <$> element <*> many (sep *> element)
       <|> pure []
+parseObjectValueIterator :: Parser Filter
+parseObjectValueIterator = do 
+  xs <- string ".[" *> space *> elements <* space <* char ']'
+  return (ObjectValueIterator (concat xs))
+  where
+    elements = seperateBy (space *> char ',' <* space) (char '"' *> many (normal <|> escape) <* char '"')
+    seperateBy sep element = (:) <$> element <*> many (sep *> element)
+      <|> pure []
+    escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
+              (string "\\\\") <|>
+              (string "\\n") <|>
+              (string "\\t") <|>
+              (string "\\r") <|>
+              (string "\\f") <|>
+              (string "\\b") <|>
+              (string "\\/" *> pure "/") <|>
+              (string "\\\"")
+    normal = (: []) <$> sat ((&&) <$> (/= '"') <*> (/= '\\'))
 
 parseOptional :: Parser Filter
 parseOptional = do
-  filt <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseValueIterator) <* symbol "?"
+  filt <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseArrayValueIterator <|> parseObjectValueIterator) <* symbol "?"
   return (Optional filt)
   
-parseAllIterator :: Parser Filter 
-parseAllIterator = do 
-  _ <- symbol "." *> symbol "[" *> symbol "]"
-  return Values
+--parseAllIterator :: Parser Filter 
+--parseAllIterator = do 
+--  _ <- symbol "." *> symbol "[" *> symbol "]"
+--  return Values
 
 parseComma :: Parser Filter
 parseComma = do
@@ -75,12 +94,13 @@ parsePipe = do
   return (Pipe f1 f2)
 
 parseUnaryFilters :: Parser Filter 
-parseUnaryFilters = parseGroup <|> 
-                    parseOptional <|> 
-                    parseArrayIndex <|> 
-                    parseObjectIndex <|> 
-                    parseValueIterator <|> 
-                    parseArraySlice <|> 
+parseUnaryFilters = parseGroup <|>
+                    parseOptional <|>
+                    parseArrayIndex <|>
+                    parseObjectIndex <|>
+                    parseArrayValueIterator <|>
+                    parseObjectValueIterator <|>
+                    parseArraySlice <|>
                     parseIdentity
 
 parseFilter :: Parser Filter

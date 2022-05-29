@@ -4,6 +4,7 @@ import Parsing.Parsing
 import Jq.Json
 import Data.Char (readLitChar, chr, isHexDigit)
 import Numeric (readHex)
+import Data.Map (fromList)
 
 parseJNull :: Parser JSON
 parseJNull = do _ <- string "null"
@@ -47,7 +48,7 @@ parseJArray = do xs <- char '[' *> space *> elements <* space <* char ']'
     elements = seperateBy (space *> char ',' <* space) parseJSON
 
 parseJObject :: Parser JSON
-parseJObject = JObject <$> (char '{' *> space *> keyvalues <* space <* char '}')
+parseJObject = JObject . fromList <$> (char '{' *> space *> keyvalues <* space <* char '}')
   where
     keyvalues = seperateBy (space *> char ',' <* space) parseJObjKeyVal
 

@@ -3,6 +3,8 @@ module Jq.Compiler where
 import           Jq.Filters
 import           Jq.Json
 import Data.Either (isRight, fromRight, fromLeft)
+import Data.Map (lookup, elems, notMember)
+import Data.Maybe (fromJust)
 
 
 type JProgram a = JSON -> Either String a
@@ -12,7 +14,7 @@ compile Identity inp = return [inp]
 
 compile (Group fs) inp = compile (foldl (\a b -> (Pipe a b)) Identity fs) inp
 
-compile (ObjectIndex i) (JObject kvs) = case lookup i kvs of
+compile (ObjectIndex i) (JObject map) = case Data.Map.lookup i map of
   Just v  -> Right [v]
   Nothing -> Right [JNull]
 compile (ObjectIndex _) JNull = Right [JNull]
@@ -39,12 +41,13 @@ compile (ArraySlice s e) (JArray xs)
     Right [JArray ys] -> Right [JArray (head xs : ys)]
     err -> err
   | otherwise = compile (ArraySlice (s-1) (e-1)) (JArray $ tail xs)
-  
 
-compile (ValueIterator []) (JArray xs) = Right xs
-compile (ValueIterator (v:vs)) (JArray xs)
-  | v < 0           = compile (ValueIterator ((length xs + v):vs)) (JArray xs)
-  | vs /= []        = (f :) <$> compile (ValueIterator vs) (JArray xs)
+
+compile (ArrayValueIterator []) (JArray xs) = Right xs
+compile (ArrayValueIterator []) (JObject mp) = compile (ObjectValueIterator []) (JObject mp)
+compile (ArrayValueIterator (v:vs)) (JArray xs)
+  | v < 0           = compile (ArrayValueIterator ((length xs + v):vs)) (JArray xs)
+  | vs /= []        = (f :) <$> compile (ArrayValueIterator vs) (JArray xs)
   | otherwise       = Right [f]
   where
     f
@@ -57,15 +60,15 @@ compile (ValueIterator (v:vs)) (JArray xs)
 --  Right [JArray ys] -> Right [JArray (x:ys)]
 --  err -> err
 --compile (ValueIterator vs) (JArray (_:xs)) = compile (ValueIterator (map (\x->x-1) vs)) (JArray xs)
-compile (ValueIterator []) (JObject kvs) = Right $ map (\(_,v)->v) kvs
-compile (ValueIterator (v:vs)) (JObject kvs)
-  | v < 0           = compile (ValueIterator ((length kvs + v):vs)) (JObject kvs)
-  | vs /= []        = (f :) <$> compile (ValueIterator vs) (JObject kvs)
+compile (ObjectValueIterator []) (JObject kvs) = Right $ elems kvs
+compile (ObjectValueIterator []) (JArray xs) = compile (ArrayValueIterator []) (JArray xs)
+compile (ObjectValueIterator (v:vs)) (JObject kvs)
+  | vs /= []        = (f :) <$> compile (ObjectValueIterator vs) (JObject kvs)
   | otherwise       = Right [f]
   where
     f
-      | v >= length kvs  = JNull
-      | otherwise       = snd (kvs !! v) 
+      | notMember v kvs   = JNull
+      | otherwise         = fromJust $ Data.Map.lookup v kvs
 --compile (ValueIterator []) (JObject kvs) = Right [JArray (map (\(_,v)->v) kvs)]
 --compile (ValueIterator _) (JObject []) = Right [JNull]
 --compile (ValueIterator (0:[])) (JObject ((_,v):kvs)) = Right [JArray [v]]
@@ -102,8 +105,8 @@ compile (Pipe a b) inp = case compile a inp of
     f [] = Right []
     f (x:xs) = either Left (\out -> (out ++) <$> f xs) (compile b x)
                   
-compile Values (JArray xs) = Right xs
-compile Values (JObject kvs) = Right (map (\(_,v)->v) kvs)
+--compile Values (JArray xs) = Right xs
+--compile Values (JObject kvs) = Right (map (\(_,v)->v) kvs)
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 

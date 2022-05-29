@@ -1,6 +1,7 @@
 module Jq.Json where
 
 import Data.List (intercalate)
+import Data.Map (Map, assocs, fromList, size)
 
 
 data JSON =
@@ -10,7 +11,7 @@ data JSON =
     JString String  |
     JBool   Bool    |
     JArray  [JSON]  |
-    JObject [(String, JSON)]
+    JObject (Map String JSON)
     
 prettyIndent :: String -> String 
 prettyIndent [] = []
@@ -26,8 +27,11 @@ instance Show JSON where
   show (JBool False) = "false"
   show (JArray []) = "[]"
   show (JArray xs) = "[\n  " ++ intercalate ",\n  " (map (prettyIndent . show) xs) ++ "\n]"
-  show (JObject []) = "{}"
-  show (JObject kvs) = "{\n  " ++ intercalate ",\n  " (map (\(k, v) -> prettyIndent (show k) ++ ": " ++ prettyIndent (show v)) kvs) ++ "\n}"
+  show (JObject mp)
+    | size mp == 0  = "{}"
+    | otherwise     = "{\n  " ++ intercalate ",\n  " (map (\(k, v) -> prettyIndent (show k) ++ ": " ++ prettyIndent (show v)) kvs) ++ "\n}"
+    where
+      kvs = assocs mp
 
 instance Eq JSON where
   (JNull) == (JNull) = True
@@ -58,4 +62,4 @@ jsonArraySC :: [JSON] -> JSON
 jsonArraySC = JArray
 
 jsonObjectSC :: [(String, JSON)] -> JSON
-jsonObjectSC = JObject
+jsonObjectSC = JObject . fromList
