@@ -97,7 +97,7 @@ parseIndexers = parseArrayIndex <|>
 
 parseFilter :: Parser Filter
 parseFilter = do
-    f1 <- parseValueConstructors <|> parseBonus <|> parsePipe <|> parseComma <|> parseUnaryFilters
+    f1 <- parseValueConstructors <|> parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
 
