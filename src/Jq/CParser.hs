@@ -38,14 +38,15 @@ parseArrayIndex = ArrayIndex <$> (string ".[" *> int <* char ']')
 
 parseArraySlice :: Parser Filter
 parseArraySlice = do
-  start <- string ".[" *> space *> integer <|> pure 0
+  _ <- string ".["
+  start <- space *> integer <|> pure 0
   _ <- space *> char ':'
   end <- space *> integer <|> pure (maxBound :: Int)
   _ <- space *> symbol "]"
   return (ArraySlice start end)
 
 parseArrayValueIterator :: Parser Filter
-parseArrayValueIterator = do 
+parseArrayValueIterator = do
   xs <- string ".[" *> space *> elements <* space <* char ']'
   return (ArrayValueIterator xs)
   where
@@ -53,7 +54,7 @@ parseArrayValueIterator = do
     seperateBy sep element = (:) <$> element <*> many (sep *> element)
       <|> pure []
 parseObjectValueIterator :: Parser Filter
-parseObjectValueIterator = do 
+parseObjectValueIterator = do
   xs <- string ".[" *> space *> elements <* space <* char ']'
   return (ObjectValueIterator (concat xs))
   where
@@ -76,8 +77,8 @@ parseOptional = do
   filt <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseArrayValueIterator <|> parseObjectValueIterator) <* symbol "?"
   return (Optional filt)
   
---parseAllIterator :: Parser Filter 
---parseAllIterator = do 
+--parseAllIterator :: Parser Filter
+--parseAllIterator = do
 --  _ <- symbol "." *> symbol "[" *> symbol "]"
 --  return Values
 

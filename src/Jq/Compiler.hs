@@ -32,8 +32,8 @@ compile (ArrayIndex i) (JArray (x:xs))
 --  Right [JArray ys] -> Right [JArray (x : ys)]
 --  err -> err
 compile (ArraySlice s e) (JArray xs)
-  | s < 0 = compile (ArraySlice (length xs + s) e) (JArray xs)
-  | e < 0 = compile (ArraySlice s (length xs + e)) (JArray xs)
+  | s < 0 = compile (ArraySlice (length xs - min (-s) (length xs)) e) (JArray xs)
+  | e < 0 = compile (ArraySlice s (length xs - min (-e) (length xs))) (JArray xs)
   | xs == [] = Right [JArray []]
   | s >= e = Right [JArray []]
   | s == e = Right [JArray []]
