@@ -14,7 +14,8 @@ data Filter =
 --  ConstructValue  Filter   |
   FNum          Int  |
   FBool         Bool     |
-  FString       String   
+  FString       String   |
+  FArray        [Filter]
 
 instance Show Filter where
   show Identity = "."
@@ -46,6 +47,7 @@ instance Eq Filter where
   (FNum a) == (FNum b) = a == b
   (FBool a) == (FBool b) = a == b
   (FString a) == (FString b) = a == b
+  (FArray xs) == (FArray ys) = xs == ys
   _ == _ = False
   
 

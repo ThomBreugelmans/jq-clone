@@ -10,8 +10,9 @@ import Numeric (readHex)
 parseIdentity :: Parser Filter
 parseIdentity = do
   _ <- space *> char '.' <* space
-  filt <- parseIndexers <|> parseOptional <|> pure Identity
-  if filt == Identity then return Identity else return (Pipe Identity filt)
+  return Identity
+--  filt <- parseIndexers <|> parseOptional <|> pure Identity
+--  if filt == Identity then return Identity else return (Pipe Identity filt)
 
 parseGroup :: Parser Filter
 parseGroup = do
@@ -81,7 +82,6 @@ parseUnaryFilters :: Parser Filter
 parseUnaryFilters = parseGroup <|>
                     parseOptional <|>
                     parseIndexers <|>
-                    parseValueConstructors <|>
                     parseIdentity
 
 parseIndexers :: Parser Filter
@@ -93,7 +93,7 @@ parseIndexers = parseArrayIndex <|>
 
 parseFilter :: Parser Filter
 parseFilter = do
-    f1 <- parsePipe <|> parseComma <|> parseUnaryFilters
+    f1 <- parseValueConstructors <|> parsePipe <|> parseComma <|> parseUnaryFilters
     f2 <- parseFilter <|> pure Identity
     return (Pipe f1 f2)
     
@@ -102,7 +102,14 @@ parseValueConstructors :: Parser Filter
 parseValueConstructors = string "true" *> return (FBool True) <|>
                          string "false" *> return (FBool False) <|>
                          FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
-                         FNum <$> integer -- TODO for some reason floats result in infinite loops... wtf
+                         FNum <$> integer <|> -- TODO for some reason floats result in infinite loops... wtf
+                         do
+                            el <- (char '[' *> space *> elements <* space <* char ']')
+                            return (FArray el)
+  where
+     elements = seperateBy (space *> char ',' <* space) parseFilter
+     seperateBy sep element = (:) <$> element <*> many (sep *> element)
+       <|> pure []
 
 
 parseConfig :: [String] -> Either String Config

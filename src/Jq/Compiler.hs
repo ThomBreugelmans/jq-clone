@@ -80,6 +80,10 @@ compile (Pipe a b) inp = case compile a inp of
 compile (FBool b) inp = Right [JBool b]
 compile (FNum f) inp = Right [JNum f]
 compile (FString s) inp = Right [JString s]
+compile (FArray []) inp = Right [JArray []]
+compile (FArray (x:xs)) inp = case compile (FArray xs) inp of
+  Right res -> concat . (map (\v -> map (\(JArray ys) -> JArray (v:ys)) res)) <$> (compile x inp)
+  err -> err
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 
