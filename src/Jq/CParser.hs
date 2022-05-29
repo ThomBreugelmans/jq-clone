@@ -95,6 +95,7 @@ parseIndexers = parseArrayIndex <|>
                 parseArrayValueIterator <|>
                 parseObjectValueIterator
 
+-- I do have (part) of the comparison bonus but for some reason when I add it the parsing/compiling becomes infinite or smth
 parseFilter :: Parser Filter
 parseFilter = do
     f1 <- parseValueConstructors <|> parsePipe <|> parseComma <|> parseUnaryFilters
@@ -131,17 +132,17 @@ parseValueConstructors = string "null" *> return (FNull) <|>
 parseBonus = parseEquals <|> parseNotEquals
 
 parseEquals :: Parser Filter
-parseEquals = do 
+parseEquals = do
   f1 <- parseFilter
-  _ <- space *> string " == " <* space
+  space *> string " == " <* space
   f2 <- parseFilter
-  return (Equals f1 f2)  
+  return (Equals f1 f2)
 parseNotEquals :: Parser Filter
-parseNotEquals = do 
+parseNotEquals = do
   f1 <- parseFilter
-  _ <- space *> string " == " <* space
+  space *> string " == " <* space
   f2 <- parseFilter
-  return (NotEquals f1 f2)  
+  return (NotEquals f1 f2)
 
 
 parseConfig :: [String] -> Either String Config
