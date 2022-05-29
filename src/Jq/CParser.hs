@@ -20,7 +20,7 @@ parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> (concat 
   <|>
     ObjectIndex <$> (char '.' *> ident)
   <|>
-    ObjectIndex <$> (string ".\"" *> ident <* char '"')
+    ObjectIndex <$> (string ".\"" *> (concat <$> many (normal <|> escape)) <* char '"')
   where
     escape =  (string "\\u" *> ((: []) <$> (chr . fst . head . readHex <$> sequenceA (replicate 4 (sat isHexDigit))))) <|>
               (string "\\\\") <|>
@@ -74,7 +74,7 @@ parseObjectValueIterator = do
 
 parseOptional :: Parser Filter
 parseOptional = do
-  filt <- (parseObjectIndex <|> parseArraySlice <|> parseArrayIndex <|> parseArrayValueIterator <|> parseObjectValueIterator) <* symbol "?"
+  filt <- parseIndexers <* symbol "?"
   return (Optional filt)
   
 --parseAllIterator :: Parser Filter
@@ -97,12 +97,15 @@ parsePipe = do
 parseUnaryFilters :: Parser Filter 
 parseUnaryFilters = parseGroup <|>
                     parseOptional <|>
-                    parseArrayIndex <|>
-                    parseObjectIndex <|>
-                    parseArrayValueIterator <|>
-                    parseObjectValueIterator <|>
-                    parseArraySlice <|>
+                    parseIndexers <|>
                     parseIdentity
+
+parseIndexers :: Parser Filter
+parseIndexers = parseArrayIndex <|>
+                parseObjectIndex <|>
+                parseArraySlice <|>
+                parseArrayValueIterator <|> 
+                parseObjectValueIterator
 
 parseFilter :: Parser Filter
 parseFilter = do
