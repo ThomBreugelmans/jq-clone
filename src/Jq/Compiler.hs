@@ -3,7 +3,7 @@ module Jq.Compiler where
 import           Jq.Filters
 import           Jq.Json
 import Data.Either (isRight, fromRight, fromLeft)
-import Data.Map (lookup, elems, notMember)
+import Data.Map (lookup, elems, notMember, fromList)
 import Data.Maybe (fromJust)
 
 
@@ -85,6 +85,12 @@ compile (FArray []) inp = Right [JArray []]
 compile (FArray (x:xs)) inp = case compile (FArray xs) inp of
   Right res -> concat . (map (\v -> map (\(JArray ys) -> JArray (v:ys)) res)) <$> (compile x inp)
   err -> err
+compile (FObject kvs) inp = Right [JObject (fromList (map (\(k,v) -> (compileKey k, compileVal v)) kvs))]
+  where
+    compileKey k = case compile k inp of
+      Right [JString s] -> s
+    compileVal v = case compile v inp of
+      Right [x] -> x
 
 compile f i = Left ("Error, provided filter: " ++ show f ++ " and input: " ++ show i ++ " do not match!")
 

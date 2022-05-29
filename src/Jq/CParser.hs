@@ -105,12 +105,22 @@ parseValueConstructors = string "null" *> return (FNull) <|>
                          FString <$> (char '"' *> (concat <$> many (normal <|> escape)) <* char '"') <|>
                          FNum <$> integer <|> -- TODO for some reason floats result in infinite loops... wtf
                          do
-                            el <- (char '[' *> space *> elements <* space <* char ']')
+                            el <- char '[' *> space *> elements <* space <* char ']'
                             return (FArray el)
+                        <|> 
+                        do
+                            kvs <- char '{' *> space *> seperateBy (space *> char ',' <* space) keyValuePairs <* space <* char '}'
+                            return (FObject kvs)
   where
      elements = seperateBy (space *> char ',' <* space) parseFilter
      seperateBy sep element = (:) <$> element <*> many (sep *> element)
        <|> pure []
+     keyValuePairs :: Parser (Filter, Filter)
+     keyValuePairs = do
+       k <- space *> parseFilter
+       _ <- space *> char ':' <* space
+       v <- parseFilter
+       return (k,v)
 
 
 parseConfig :: [String] -> Either String Config

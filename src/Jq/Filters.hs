@@ -16,7 +16,8 @@ data Filter =
   FNum          Int  |
   FBool         Bool     |
   FString       String   |
-  FArray        [Filter]
+  FArray        [Filter] |
+  FObject       [(Filter, Filter)]
 
 instance Show Filter where
   show Identity = "."
@@ -50,6 +51,7 @@ instance Eq Filter where
   (FBool a) == (FBool b) = a == b
   (FString a) == (FString b) = a == b
   (FArray xs) == (FArray ys) = xs == ys
+  (FObject xkvs) == (FObject ykvs) = xkvs == ykvs
   _ == _ = False
   
 
