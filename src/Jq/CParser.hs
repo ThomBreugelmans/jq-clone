@@ -21,7 +21,7 @@ parseObjectIndex = ObjectIndex <$> (string ".[" *> space *> char '"' *> many (sa
     ObjectIndex <$> (string ".\"" *> ident <* char '"')
 
 parseArrayIndex :: Parser Filter
-parseArrayIndex = ArrayIndex <$> (string ".[" *> natural <* char ']')
+parseArrayIndex = ArrayIndex <$> (string ".[" *> int <* char ']')
 
 parseArraySlice :: Parser Filter
 parseArraySlice = do

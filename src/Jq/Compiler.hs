@@ -20,7 +20,9 @@ compile (ObjectIndex _) inp = Left ("Input is not of type JObject: " ++ show inp
 
 compile (ArrayIndex 0) (JArray (x:xs)) = Right [x]
 compile (ArrayIndex 0) (JArray []) = Left "Index out of bounds"
-compile (ArrayIndex i) (JArray (_:xs)) = compile (ArrayIndex (i-1)) (JArray xs)
+compile (ArrayIndex i) (JArray (x:xs)) 
+  | i > 0 = compile (ArrayIndex (i-1)) (JArray xs)
+  | i < 0 = compile (ArrayIndex ((-i)-1)) (JArray $ reverse (x:xs))
 
 compile (ArraySlice 0 x) (JArray [])
   | x <= 0 = Right [JArray []]
